@@ -4,7 +4,7 @@
   "description": "A covid19 simultaion built in typescript",
   "main": "./dist/index.html",
   "scripts": {
-    "serve": "npm run build",
+    "start": "npm run watch",
     "build": "webpack",
     "watch": "webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,6 +22,8 @@
   "devDependencies": {
     "@types/node": "13.9.8",
     "@types/p5": "^0.9.0",
+    "browser-sync": "^2.26.7",
+    "browser-sync-webpack-plugin": "^1.2.0",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^3.4.2",
     "extract-loader": "^5.0.1",
@@ -35,7 +37,6 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
-    "lodash": "^4.17.15",
     "p5": "^1.0.0",
     "tslint": "^6.1.0"
   }

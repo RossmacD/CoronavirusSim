@@ -14,7 +14,6 @@
 import '../index.html';
 // Import CSS for webpack
 import '../css/style.css';
-
 // Import P5 Sketch
 import './sketches/mainSketch'
 

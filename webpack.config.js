@@ -1,7 +1,8 @@
 const path = require('path');
-// const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
+
 
 module.exports = {
   mode: 'development',
@@ -42,6 +43,12 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js', '.css']
   },
   plugins: [
+    // Add a server which refreshes the browser on save 
+    new BrowserSyncPlugin({
+      host: 'localhost',
+      port: 3000,
+      server: { baseDir: ['dist'] }
+    }),
     // Webpack plugin for clean up on rebuids
     new CleanWebpackPlugin(),
     // Set a HTML template to be generated with scripts imported
