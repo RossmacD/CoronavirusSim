@@ -15,7 +15,7 @@ export default abstract class Human{
 
     // traits
     isColliding: boolean;
-
+    originalCell:number;
 
     constructor(_p:p5, _id :number, _position :p5.Vector){
         this.p = _p;
@@ -47,7 +47,7 @@ export default abstract class Human{
         // this.immunity=20;
         // You might no show symptoms to other viruses, you can still transmit the virus
         // this.asymptomatic = Math.random() < 0.5;
-
+        this.originalCell=0;
     }
 
     render() {

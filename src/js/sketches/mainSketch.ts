@@ -13,7 +13,7 @@ import { Cell } from '../classes/Enviroment/Cell';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 10;
+const numHumans: number = 5;
 let collisonNo: number = 0;
 // let checknum:number = 0;
 const minRadius: number = 10;
@@ -56,8 +56,8 @@ const sketch = (p: p5) => {
     generateGrid(p);
     // Generate initial humans
     generateMolecules(p);
-    // gridifyHumans(p);
-    p.noLoop();
+    gridifyHumans(p);
+    // p.noLoop();
     // console.log(cells);
   };
 
@@ -65,7 +65,7 @@ const sketch = (p: p5) => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
-    checkCollisions(p)
+    checkCollisions(p);
     drawGrid(p);
     renderHumans(p);
   };
@@ -79,7 +79,7 @@ export default new p5(sketch);
 function generateMolecules(p: p5) {
   humans = [];
   for (let i = 0; i < numHumans; i++) {
-    humans.push(new Civilian(p, i, p.createVector(p.random(20,570), p.random(20,570))));
+    humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     // humans.push(new Civilian(p, i, p.createVector(290,260)));
     // console.log(humans[i].position)
   }
@@ -147,8 +147,6 @@ function renderHumans(p: p5) {
   });
 }
 
-
-
 function splitIntoGrids(p: p5) {
   generateGrid(p);
   humans.forEach((human) => {
@@ -156,12 +154,13 @@ function splitIntoGrids(p: p5) {
     // Gets Y value by mapping + flooring to amont of rows then multiplying by the number of coloums
     // Push the index to the box the molecule is in
     const currentXCell = Math.floor(human.position.x / colWidth);
-    const currentYCell=Math.floor(human.position.y / rowHeight); 
+    const currentYCell = Math.floor(human.position.y / rowHeight);
     const yMapped = currentYCell * numCols;
     const currentCell = currentXCell + yMapped;
 
     // Push to cell
     cells[currentCell].humanKey.push(human.id);
+    human.originalCell = currentCell;
     // Overlap Tests:
     // Check which half of the cell it is in, then check if it is closer to that edge than its radius, if so push to th
     /**
@@ -169,54 +168,64 @@ function splitIntoGrids(p: p5) {
      */
     // X Check
     const currentCellXStart = colWidth * currentXCell;
-    let closestXCell=0;
+    let closestXCell = 0;
     if (currentCell > 0 && human.position.x < currentCellXStart + human.radius) {
       closestXCell = -1;
       // currentCell+closestXCell<0?console.log(closestXCell, human.position.x,currentCell):
-      cells[currentCell+closestXCell].humanKey.push(human.id);
+      cells[currentCell + closestXCell].humanKey.push(human.id);
     } else if (currentCell < numCols * numRows - 1 && human.position.x > currentCellXStart + colWidth - human.radius) {
       closestXCell = 1;
       // closestXCell>15?console.log(closestXCell, human.position.x,currentCell):
-      cells[currentCell+closestXCell].humanKey.push(human.id);
+      cells[currentCell + closestXCell].humanKey.push(human.id);
     }
 
     // Y Check
-    const currentCellYStart = rowHeight *currentYCell;
+    const currentCellYStart = rowHeight * currentYCell;
     let closestYCell = 0;
     if (currentCell > numCols && human.position.y < currentCellYStart + human.radius) {
-       closestYCell = -numCols;
+      closestYCell = -numCols;
       // console.log(closestYCell)
-      cells[currentCell+closestYCell].humanKey.push(human.id);
-    } else if (currentCell < numCols * numRows - 1-numCols && human.position.y > (currentCellYStart+ rowHeight) - human.radius) {
-          closestYCell = numCols;
+      cells[currentCell + closestYCell].humanKey.push(human.id);
+    } else if (currentCell < numCols * numRows - 1 - numCols && human.position.y > currentCellYStart + rowHeight - human.radius) {
+      closestYCell = numCols;
       // console.log(cells[closestYCell])
 
-        cells[currentCell+closestYCell].humanKey.push(human.id);
-     }
+      cells[currentCell + closestYCell].humanKey.push(human.id);
+    }
 
-     // Check if ball is in the corner
-     if(closestYCell!==0&&closestXCell!==0){
-      cells[currentCell+closestYCell+closestXCell].humanKey.push(human.id);
-     }
+    // Check if ball is in the corner
+    if (closestYCell !== 0 && closestXCell !== 0) {
+      cells[currentCell + closestYCell + closestXCell].humanKey.push(human.id);
+    }
   });
 }
 
-
-function checkCollisions(p:p5){
-  collisonNo=0;
-  cells.forEach(cell=>{
+function checkCollisions(p: p5) {
+  collisonNo = 0;
+  cells.forEach((cell) => {
     if (cell.humanKey.length > 1) {
       for (let i = 0; i < cell.humanKey.length; i++) {
-          for (let j = i + 1; j < cell.humanKey.length; j++) {
+        for (let j = i + 1; j < cell.humanKey.length; j++) {
+          const sub=p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position);
+          const mag = sub.mag();
+          const combinedRadius=humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius
+          if (mag < combinedRadius) {
+            // Seperate
+            console.log(sub.normalize().mult(combinedRadius-Math.ceil(mag)));
+            humans[cell.humanKey[i]].position.add(sub.normalize().mult(combinedRadius-Math.ceil(mag)+1))
             // tslint:disable-next-line: max-line-length
-            if (p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position).mag() < humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius) {
-              humans[cell.humanKey[i]].isColliding = true;
-              humans[cell.humanKey[j]].isColliding = true;
-                  collisonNo++;
-              }
+            // Trading velocity and turning perpendicular https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
+            const v1 = humans[cell.humanKey[i]].velocity;
+            humans[cell.humanKey[i]].isColliding = true;
+            humans[cell.humanKey[i]].velocity = humans[cell.humanKey[j]].velocity;
+            humans[cell.humanKey[j]].isColliding = true;
+            humans[cell.humanKey[j]].velocity = v1;
+
+            collisonNo++;
           }
+        }
       }
-  }
-  })
-  console.log(collisonNo);
+    }
+  });
+  console.log('colliosons', collisonNo);
 }
