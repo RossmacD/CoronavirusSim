@@ -59,7 +59,7 @@ export default abstract class Human{
             this.p.translate(this.position.x, this.position.y);
             this.p.ellipse(0, 0, this.radius * 2, this.radius * 2);
         this.p.pop();
-        // this.isColliding = false;
+        this.isColliding = false;
     }
 
 

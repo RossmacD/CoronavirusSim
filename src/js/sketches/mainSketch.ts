@@ -13,9 +13,8 @@ import { Cell } from '../classes/Enviroment/Cell';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 100;
-// let humanKey: Array<Array<number>> = [];
-// let collisonNo: number = 0;
+const numHumans: number = 10;
+let collisonNo: number = 0;
 // let checknum:number = 0;
 const minRadius: number = 10;
 const maxRadius: number = 20;
@@ -58,7 +57,7 @@ const sketch = (p: p5) => {
     // Generate initial humans
     generateMolecules(p);
     // gridifyHumans(p);
-    // p.noLoop();
+    p.noLoop();
     // console.log(cells);
   };
 
@@ -66,6 +65,7 @@ const sketch = (p: p5) => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
+    checkCollisions(p)
     drawGrid(p);
     renderHumans(p);
   };
@@ -124,6 +124,18 @@ function drawGrid(p: p5) {
 }
 
 /**
+ * Evenly spread out the humans in a grid to avoid collisions after generation
+ * @param p The context of p5
+ */
+function gridifyHumans(p: p5) {
+  humans.forEach((human, indexValue) => {
+    const humanSqrt = Math.ceil(Math.sqrt(humans.length));
+    human.position.x = (p.width / (humanSqrt + 1)) * ((indexValue % humanSqrt) + 1);
+    human.position.y = (p.height / (humanSqrt + 1)) * (Math.floor(indexValue / humanSqrt) + 1);
+  });
+}
+
+/**
  * Render each human in the grid
  * @param p The context of p5
  */
@@ -135,17 +147,7 @@ function renderHumans(p: p5) {
   });
 }
 
-/**
- * Evenly spread out the humans in a grid to avoid collisions after generation
- * @param p The context of p5
- */
-function gridifyHumans(p: p5) {
-  humans.forEach((human, indexValue) => {
-    const humanSqrt = Math.ceil(Math.sqrt(humans.length));
-    human.position.x = (p.width / (humanSqrt + 1)) * ((indexValue % humanSqrt) + 1);
-    human.position.y = (p.height / (humanSqrt + 1)) * (Math.floor(indexValue / humanSqrt) + 1);
-  });
-}
+
 
 function splitIntoGrids(p: p5) {
   generateGrid(p);
@@ -167,10 +169,6 @@ function splitIntoGrids(p: p5) {
      */
     // X Check
     const currentCellXStart = colWidth * currentXCell;
-    // console.table([currentCell, currentCell<0, human.position.x < currentCellXStart + human.radius])
-    // console.log( human.position.x < (currentCellXStart + colWidth) - human.radius)
-    // console.table([human.position.x , currentCellXStart ,currentCellXStart+colWidth, human.radius])
-
     let closestXCell=0;
     if (currentCell > 0 && human.position.x < currentCellXStart + human.radius) {
       closestXCell = -1;
@@ -196,8 +194,29 @@ function splitIntoGrids(p: p5) {
         cells[currentCell+closestYCell].humanKey.push(human.id);
      }
 
+     // Check if ball is in the corner
      if(closestYCell!==0&&closestXCell!==0){
       cells[currentCell+closestYCell+closestXCell].humanKey.push(human.id);
      }
   });
+}
+
+
+function checkCollisions(p:p5){
+  collisonNo=0;
+  cells.forEach(cell=>{
+    if (cell.humanKey.length > 1) {
+      for (let i = 0; i < cell.humanKey.length; i++) {
+          for (let j = i + 1; j < cell.humanKey.length; j++) {
+            // tslint:disable-next-line: max-line-length
+            if (p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position).mag() < humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius) {
+              humans[cell.humanKey[i]].isColliding = true;
+              humans[cell.humanKey[j]].isColliding = true;
+                  collisonNo++;
+              }
+          }
+      }
+  }
+  })
+  console.log(collisonNo);
 }
