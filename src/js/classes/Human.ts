@@ -13,6 +13,9 @@ export default abstract class Human{
     fill:p5.Color;
     stroke:p5.Color;
 
+    // traits
+    isColliding: boolean;
+
 
     constructor(_p:p5, _id :number, _position :p5.Vector){
         this.p = _p;
@@ -28,7 +31,7 @@ export default abstract class Human{
         // this.pulseRadiusMax = 15;
         // this.pulseSpeed = 1;
         /* Collision*/
-        // this.isColliding = false;
+        this.isColliding = false;
         // this.bounce = false;
         // Number between 0 and 8 representing the closest corner or edge
         // this.closestEdge=0;
@@ -50,8 +53,8 @@ export default abstract class Human{
     render() {
         this.p.stroke(this.stroke);
         this.p.strokeWeight(1);
-        this.p.fill(this.fill);
-        // this.isColliding ? fill(this.fill) : noFill();
+        // this.p.fill(this.fill);
+        this.isColliding ? this.p.fill(this.fill) : this.p.noFill();
         this.p.push();
             this.p.translate(this.position.x, this.position.y);
             this.p.ellipse(0, 0, this.radius * 2, this.radius * 2);
@@ -66,14 +69,16 @@ export default abstract class Human{
 
     checkEdges(p:p5){
         // if bouncing on walls && this.velocity.x < 0
-         if ((this.position.x < this.radius )|| this.position.x > p.width - this.radius) {
+         if ((this.position.x < this.radius )&& this.velocity.x < 0|| this.position.x > p.width - this.radius) {
            this.velocity.x = this.velocity.x * -1;
          }
 
-         if (this.position.y < this.radius || this.position.y > p.height - this.radius) {
+         if (this.position.y < this.radius&& this.velocity.y < 0 || this.position.y > p.height - this.radius) {
            this.velocity.y = this.velocity.y * -1;
          }
     }
 
-    reset(){}
+    // reset(){
+
+    // }
 }
