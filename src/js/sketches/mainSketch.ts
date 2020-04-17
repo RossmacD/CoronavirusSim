@@ -81,7 +81,7 @@ function generateMolecules(p: p5) {
   doctors = [];
   doctorKey = [];
   for (let i = 0; i < numHumans; i++) {
-    if (p.random() > 0.3||doctors.length<1) {
+    if (p.random() > 0.3 || doctors.length > 1 ) {
       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else {
       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
@@ -276,9 +276,11 @@ function checkCollisions(p: p5) {
           const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
           if (mag < combinedRadius) {
             if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
+              doctorKey.push(humans[cell.humanKey[j]].id) 
               humans[cell.humanKey[j]] = new DeadHuman(humans[cell.humanKey[j]]);
             }
             if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
+              doctorKey.push(humans[cell.humanKey[i]].id)
               humans[cell.humanKey[i]] = new DeadHuman(humans[cell.humanKey[i]]);
             }
             // Seperate

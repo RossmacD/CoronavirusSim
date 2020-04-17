@@ -80,7 +80,11 @@ export default abstract class Human {
     }
 
     // tslint:disable-next-line: max-line-length
-    if ((this.position.y < this.radius && this.velocity.y < 0) || (this.position.y > p.height - this.radius && this.velocity.y > 0)) {
+    if (this.position.y < this.radius && this.velocity.y < 0){
+        this.position.y=this.radius+1
+        this.velocity.y = this.velocity.y * -1;
+    }else if(this.position.y > p.height - this.radius && this.velocity.y > 0) {
+        this.position.y= p.height - this.radius-1
       this.velocity.y = this.velocity.y * -1;
     }
   }
