@@ -18,7 +18,7 @@ export default abstract class Human {
   age: number;
   sickness: number;
   health: number;
-  immunity: number;
+  immunity: boolean;
   asymptomatic: boolean;
   pulseRadius: number;
   pulseRadiusMax: number;
@@ -50,23 +50,12 @@ export default abstract class Human {
     // After a successful recovery from the virus you may have immunity for a period, immunity can also be gotten by
     // wahsing hands and so on
     // https://www.nbcnews.com/health/health-news/can-you-catch-coronavirus-twice-you-ll-probably-be-immune-n1171976
-    this.immunity = 20;
+    this.immunity = false;
     // You might no show symptoms to other viruses, you can still transmit the virus
     this.asymptomatic = Math.random() < 0.5;
   }
 
   render() {
-    if(!this.dead&&this.health<0){
-        this.die();
-    }
-    this.p.strokeWeight(this.pulseRadius);
-    this.p.fill(this.fill);
-    if (this.isColliding||this.dead) {
-    //   this.pulseRadius > this.pulseRadiusMax ? this.pulseRadius += this.pulseSpeed : this.pulseRadius = this.pulseRadius = 0;
-      this.p.stroke(this.stroke);
-    } else {
-      this.p.noStroke();
-    }
     this.p.push();
     this.p.translate(this.position.x, this.position.y);
     this.p.ellipse(0, 0, this.radius * 2, this.radius * 2);
@@ -76,27 +65,21 @@ export default abstract class Human {
 
   step() {
     this.position.add(this.velocity);
-    if(this.sickness>80){this.sickness++;this.health-=this.sickness*0.0005}
   }
 
   checkEdges(p: p5) {
     // if bouncing on walls && this.velocity.x < 0
-    if ((this.position.x < this.radius && this.velocity.x < 0) || (this.position.x > p.width - this.radius && this.velocity.x > 0)) {
-      this.velocity.x = this.velocity.x * -1;
+    if ((this.position.x < this.radius && this.velocity.x < 0) ){
+        this.position.x=this.radius+1
+        this.velocity.x = this.velocity.x * -1;
+    }else if( (this.position.x > p.width - this.radius && this.velocity.x > 0)) {
+        this.position.x= p.width - this.radius-1
+        this.velocity.x = this.velocity.x * -1;
     }
 
+    // tslint:disable-next-line: max-line-length
     if ((this.position.y < this.radius && this.velocity.y < 0) || (this.position.y > p.height - this.radius && this.velocity.y > 0)) {
       this.velocity.y = this.velocity.y * -1;
     }
-  }
-
-  // reset(){
-
-  // }
-  die(){
-      this.velocity.x=0;
-      this.velocity.y=0;
-      this.sickness=0;
-      this.dead=true;
   }
 }

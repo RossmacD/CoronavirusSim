@@ -2,6 +2,7 @@ import * as p5 from 'p5';
 import Human from '../classes/Humans/Human';
 import { Civilian } from '../classes/Humans/Civilian';
 import { Cell } from '../classes/Enviroment/Cell';
+import { DeadHuman } from '../classes/Humans/DeadHuman';
 
 // ---------------------------
 // Global Variables
@@ -127,14 +128,17 @@ function gridifyHumans(p: p5) {
 function renderHumans(p: p5) {
   humans.forEach((human) => {
     human.render();
-    human.checkEdges(p);
     human.step();
+    human.checkEdges(p);
   });
 }
 
 function splitIntoGrids(p: p5) {
   generateGrid(p);
   humans.forEach((human) => {
+    if(human.health<0){
+      humans[human.id]=new DeadHuman(human);
+    }
     // Gets the x value by mapping the position of x to the amount of coloumns then flooring it
     // Gets Y value by mapping + flooring to amont of rows then multiplying by the number of coloums
     // Push the index to the box the molecule is in
@@ -150,7 +154,7 @@ function splitIntoGrids(p: p5) {
       const unique: Set<number> = new Set(cells[currentCell].sicknessKey);
       cells[currentCell].sicknessKey = [...unique];
     }
-    if (human.dead) {
+    if (human.constructor.name === DeadHuman.name) {
       cells[currentCell].deadKey.push(human.id);
       const unique: Set<number> = new Set(cells[currentCell].deadKey);
       cells[currentCell].deadKey = [...unique];

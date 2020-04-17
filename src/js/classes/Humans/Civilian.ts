@@ -8,12 +8,24 @@ export class Civilian extends Human {
     // this.fill = this.p.color(255,100-this.sickness);
   }
 
-  render(){
+  render() {
     if (this.sickness > 80) {
-      this.fill = this.p.color(255 - this.sickness, 255, 255 - this.sickness, 50+this.health);
+      this.fill = this.p.color(255 - this.sickness, 255, 255 - this.sickness, 50 + this.health);
     } else {
-      this.fill = this.p.color(255, 255, 255 , 50+this.health);
+      this.fill = this.p.color(255, 255, 255, 50 + this.health);
     }
-  super.render()
+    this.p.strokeWeight(this.pulseRadius);
+    this.p.fill(this.fill);
+    if (this.isColliding) {
+      this.p.stroke(this.stroke);
+    } else {
+      this.p.noStroke();
+    }
+    super.render();
+  }
+
+  step(){
+    super.step()
+    if(this.sickness>80){this.sickness++;this.health-=this.sickness*0.0005}
   }
 }
