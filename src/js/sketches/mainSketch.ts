@@ -10,11 +10,10 @@ import { Cell } from '../classes/Enviroment/Cell';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 25;
+const numHumans: number = 100;
 let collisonNo: number = 0;
-// let checknum:number = 0;
 const minRadius: number = 10;
-const maxRadius: number = 20;
+const maxRadius: number = 10;
 const numRows: number = 8;
 const numCols: number = 8;
 let colWidth: number;
@@ -37,7 +36,7 @@ const sketch = (p: p5) => {
     p.stroke(80, 150, 50);
     p.strokeWeight(1);
     // Set min and max radius for humans
-    Human.radiusMinMax = p.createVector(15, 15);
+    Human.radiusMinMax = p.createVector(minRadius, maxRadius);
     // Generate grid objects
     generateGrid(p);
     // Generate initial humans
@@ -51,7 +50,7 @@ const sketch = (p: p5) => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
-    drawGrid(p);
+    // drawGrid(p);
     renderHumans(p);
     checkCollisions(p);
   };
@@ -67,7 +66,7 @@ function generateMolecules(p: p5) {
   for (let i = 0; i < numHumans; i++) {
     humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     // humans.push(new Civilian(p, i, p.createVector(290,260)));
-    // console.log(humans[i].position)
+    humans[i].sickness = p.random(0, 100);
   }
 }
 
@@ -146,7 +145,16 @@ function splitIntoGrids(p: p5) {
 
     // Push to cell
     cells[currentCell].humanKey.push(human.id);
-    
+    if (human.sickness > 80) {
+      cells[currentCell].sicknessKey.push(human.id);
+      const unique: Set<number> = new Set(cells[currentCell].sicknessKey);
+      cells[currentCell].sicknessKey = [...unique];
+    }
+    if (human.dead) {
+      cells[currentCell].deadKey.push(human.id);
+      const unique: Set<number> = new Set(cells[currentCell].deadKey);
+      cells[currentCell].deadKey = [...unique];
+    }
     // Overlap Tests:
     // Check which half of the cell it is in, then check if it is closer to that edge than its radius, if so push to th
     /**
@@ -170,18 +178,19 @@ function splitIntoGrids(p: p5) {
     let closestYCell = 0;
     if (currentCell > numCols && human.position.y < currentCellYStart + human.radius) {
       closestYCell = -numCols;
-      // console.log(closestYCell)
       cells[currentCell + closestYCell].humanKey.push(human.id);
+      cornerBall();
     } else if (currentCell < numCols * numRows - 1 - numCols && human.position.y > currentCellYStart + rowHeight - human.radius) {
       closestYCell = numCols;
-      // console.log(cells[closestYCell])
-
       cells[currentCell + closestYCell].humanKey.push(human.id);
+      cornerBall();
     }
 
-    // Check if ball is in the corner
-    if (closestYCell !== 0 && closestXCell !== 0) {
-      cells[currentCell + closestYCell + closestXCell].humanKey.push(human.id);
+    function cornerBall() {
+      // Check if ball is in the corner
+      if (closestYCell !== 0 && closestXCell !== 0) {
+        cells[currentCell + closestYCell + closestXCell].humanKey.push(human.id);
+      }
     }
   });
 }
@@ -192,40 +201,38 @@ function checkCollisions(p: p5) {
     if (cell.humanKey.length > 1) {
       for (let i = 0; i < cell.humanKey.length; i++) {
         for (let j = i + 1; j < cell.humanKey.length; j++) {
-          const sub=p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position);
-          p.stroke(255,255,255,90)
-          p.strokeWeight(2)
+          const sub = p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position);
+          p.stroke(255, 50);
+          p.strokeWeight(2);
           // tslint:disable-next-line: max-line-length
-          p.line(humans[cell.humanKey[i]].position.x,humans[cell.humanKey[i]].position.y,humans[cell.humanKey[j]].position.x,humans[cell.humanKey[j]].position.y);
+          p.line(humans[cell.humanKey[i]].position.x, humans[cell.humanKey[i]].position.y, humans[cell.humanKey[j]].position.x, humans[cell.humanKey[j]].position.y);
           const mag = sub.mag();
-          const combinedRadius=humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius
+          const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
           if (mag < combinedRadius) {
-
             // Seperate
-            humans[cell.humanKey[i]].position.add(sub.normalize().mult(combinedRadius-Math.ceil(mag)+1))
-
-
-            
-
-
+            humans[cell.humanKey[i]].position.add(sub.normalize().mult(combinedRadius - Math.ceil(mag) + 1));
             // Sepertate balls
-              const splitDist = (combinedRadius-mag)/2;
-              const splitVector =sub.copy().normalize().mult(splitDist);
-              // humans[cell.humanKey[j]].position.add(splitVector);
-              // humans[cell.humanKey[i]].position.sub(splitVector);
+            const splitDist = (combinedRadius - mag) / 2;
+            const splitVector = sub.copy().normalize().mult(splitDist);
+            // humans[cell.humanKey[j]].position.add(splitVector);
+            // humans[cell.humanKey[i]].position.sub(splitVector);
 
             // tslint:disable-next-line: max-line-length
-            // Trading velocity and turning perpendicular https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
+            // Trading velocity https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
             const v1 = humans[cell.humanKey[i]].velocity;
             humans[cell.humanKey[i]].isColliding = true;
             humans[cell.humanKey[i]].velocity = humans[cell.humanKey[j]].velocity;
             humans[cell.humanKey[j]].isColliding = true;
             humans[cell.humanKey[j]].velocity = v1;
-
-              // get angle of distanceVect
-              const heading  = sub.heading();
-              const sine = p.sin(heading);
-              const cosine = p.cos(heading);
+            if (humans[cell.humanKey[j]].sickness > 80 || humans[cell.humanKey[i]].sickness > 80) {
+              if (humans[cell.humanKey[i]].sickness < 80) humans[cell.humanKey[i]].sickness += 5;
+              if (humans[cell.humanKey[j]].sickness < 80) humans[cell.humanKey[j]].sickness += 5;
+              // humans[cell.humanKey[j]].sickness+=5;
+            }
+            // get angle of distanceVect
+            // const heading  = sub.heading();
+            // const sine = p.sin(heading);
+            // const cosine = p.cos(heading);
 
             collisonNo++;
           }
@@ -233,5 +240,50 @@ function checkCollisions(p: p5) {
       }
     }
   });
-  console.log('colliosons', collisonNo);
+  // console.log('colliosons', collisonNo);
 }
+
+const statSketch = (p: p5) => {
+  const padding = 20;
+  const graphLines: Array<{ sick: number; dead: number }> = [];
+  /**
+   * P5 Setup
+   */
+  p.setup = () => {
+    // Set canavas to fill screen
+    // p.createCanvas(p.windowWidth, p.windowHeight);
+    p.createCanvas(p.windowHeight, p.windowHeight);
+    // Set up draw properties
+    p.background(0);
+    p.stroke(80, 150, 50);
+    p.strokeWeight(1);
+    // p.noLoop();
+    // console.log(cells);
+  };
+
+  p.draw = () => {
+    p.noStroke();
+    p.background(120);
+    p.fill(200, 40, 40);
+    p.rect(0 + padding, 0 + padding, graphLines.length, p.height / 2);
+    const amountSick = cells.reduce<number>((acc, key) => {
+      return acc + key.sicknessKey.length;
+    }, 0);
+    const amountDead = cells.reduce<number>((acc, key) => {
+      return acc + key.deadKey.length;
+    }, 0);
+    // console.log(amountSick, humans.length)
+    if (graphLines.length > p.width - padding * 2) graphLines.shift();
+    graphLines.push({ sick: amountSick, dead: amountDead });
+    p.strokeWeight(1);
+    for (let i: number = 0; i < graphLines.length; i++) {
+      p.stroke(255, 100, 0);
+      // tslint:disable-next-line: max-line-length
+      p.line(0 + padding + i, 0 + padding, 0 + padding + i, p.height / 2 + (padding*2) - p.map(graphLines[i].dead || 0, 0, humans.length, padding, p.height / 2));
+      p.stroke(0);
+      // tslint:disable-next-line: max-line-length
+      p.line(0 + padding + i, 0 + padding, 0 + padding + i, p.height / 2 + padding - p.map(graphLines[i].sick+graphLines[i].dead || 0, 0, humans.length, padding, p.height / 2));
+    }
+  };
+};
+export const p5StatSketch = new p5(statSketch);
