@@ -1,4 +1,3 @@
-import Human from '../Human';
 
 export class Cell {
   id: number;

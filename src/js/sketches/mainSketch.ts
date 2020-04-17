@@ -1,40 +1,26 @@
 import * as p5 from 'p5';
-import Human from '../classes/Human';
-import { Civilian } from '../classes/Civilian';
+import Human from '../classes/Humans/Human';
+import { Civilian } from '../classes/Humans/Civilian';
 import { Cell } from '../classes/Enviroment/Cell';
 
 // ---------------------------
 // Global Variables
 // ---------------------------
-// let molecules, moleculeKey = [];
-// let collisonNo,checknum = 0;
-// let minRadius = 10, maxRadius = 20, minVelocity = -2, maxVelocity = 2, colWidth, rowHeight;
 // An array of cells
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 5;
+const numHumans: number = 25;
 let collisonNo: number = 0;
 // let checknum:number = 0;
 const minRadius: number = 10;
 const maxRadius: number = 20;
-const numRows: number = 4;
-const numCols: number = 4;
+const numRows: number = 8;
+const numCols: number = 8;
 let colWidth: number;
 let rowHeight: number;
 
-// Create an object to hold Variables for gui.
-// GUI cannot get handle on scope otherwise, unless var is used (Undesirable as it is outdated)
-// let guiVars: object = {
-//   numOfMolecules: 1,
-//   numRows: 4,
-//   numCols: 4,
-//   radiusBaseline: 5,
-//   showGrid: true,
-//   render: true,
-//   showTrails: false
-// };
-
+// An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
    * P5 Setup
@@ -42,7 +28,7 @@ const sketch = (p: p5) => {
   p.setup = () => {
     // Set canavas to fill screen
     // p.createCanvas(p.windowWidth, p.windowHeight);
-    p.createCanvas(600, 600);
+    p.createCanvas(p.windowHeight, p.windowHeight);
     // Generating colwidth and height must be done at runtime
     colWidth = p.width / numRows;
     rowHeight = p.height / numCols;
@@ -51,7 +37,7 @@ const sketch = (p: p5) => {
     p.stroke(80, 150, 50);
     p.strokeWeight(1);
     // Set min and max radius for humans
-    Human.radiusMinMax = p.createVector(30, 30);
+    Human.radiusMinMax = p.createVector(15, 15);
     // Generate grid objects
     generateGrid(p);
     // Generate initial humans
@@ -65,9 +51,9 @@ const sketch = (p: p5) => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
-    checkCollisions(p);
     drawGrid(p);
     renderHumans(p);
+    checkCollisions(p);
   };
 };
 
@@ -160,7 +146,7 @@ function splitIntoGrids(p: p5) {
 
     // Push to cell
     cells[currentCell].humanKey.push(human.id);
-    human.originalCell = currentCell;
+    
     // Overlap Tests:
     // Check which half of the cell it is in, then check if it is closer to that edge than its radius, if so push to th
     /**
@@ -207,12 +193,27 @@ function checkCollisions(p: p5) {
       for (let i = 0; i < cell.humanKey.length; i++) {
         for (let j = i + 1; j < cell.humanKey.length; j++) {
           const sub=p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position);
+          p.stroke(255,255,255,90)
+          p.strokeWeight(2)
+          // tslint:disable-next-line: max-line-length
+          p.line(humans[cell.humanKey[i]].position.x,humans[cell.humanKey[i]].position.y,humans[cell.humanKey[j]].position.x,humans[cell.humanKey[j]].position.y);
           const mag = sub.mag();
           const combinedRadius=humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius
           if (mag < combinedRadius) {
+
             // Seperate
-            console.log(sub.normalize().mult(combinedRadius-Math.ceil(mag)));
             humans[cell.humanKey[i]].position.add(sub.normalize().mult(combinedRadius-Math.ceil(mag)+1))
+
+
+            
+
+
+            // Sepertate balls
+              const splitDist = (combinedRadius-mag)/2;
+              const splitVector =sub.copy().normalize().mult(splitDist);
+              // humans[cell.humanKey[j]].position.add(splitVector);
+              // humans[cell.humanKey[i]].position.sub(splitVector);
+
             // tslint:disable-next-line: max-line-length
             // Trading velocity and turning perpendicular https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
             const v1 = humans[cell.humanKey[i]].velocity;
@@ -220,6 +221,11 @@ function checkCollisions(p: p5) {
             humans[cell.humanKey[i]].velocity = humans[cell.humanKey[j]].velocity;
             humans[cell.humanKey[j]].isColliding = true;
             humans[cell.humanKey[j]].velocity = v1;
+
+              // get angle of distanceVect
+              const heading  = sub.heading();
+              const sine = p.sin(heading);
+              const cosine = p.cos(heading);
 
             collisonNo++;
           }

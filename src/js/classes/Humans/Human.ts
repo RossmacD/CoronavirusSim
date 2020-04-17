@@ -15,7 +15,7 @@ export default abstract class Human{
 
     // traits
     isColliding: boolean;
-    originalCell:number;
+    // originalCell:number;
 
     constructor(_p:p5, _id :number, _position :p5.Vector){
         this.p = _p;
@@ -35,7 +35,6 @@ export default abstract class Human{
         // this.bounce = false;
         // Number between 0 and 8 representing the closest corner or edge
         // this.closestEdge=0;
-        // this.cell=0;
 
         /* Health*/
         // this.age=random(10,90);
@@ -47,14 +46,12 @@ export default abstract class Human{
         // this.immunity=20;
         // You might no show symptoms to other viruses, you can still transmit the virus
         // this.asymptomatic = Math.random() < 0.5;
-        this.originalCell=0;
     }
 
     render() {
-        this.p.stroke(this.stroke);
         this.p.strokeWeight(1);
-        // this.p.fill(this.fill);
-        this.isColliding ? this.p.fill(this.fill) : this.p.noFill();
+        this.p.fill(this.fill)
+        this.isColliding ?this.p.stroke(this.stroke) : this.p.noStroke();
         this.p.push();
             this.p.translate(this.position.x, this.position.y);
             this.p.ellipse(0, 0, this.radius * 2, this.radius * 2);
@@ -69,11 +66,11 @@ export default abstract class Human{
 
     checkEdges(p:p5){
         // if bouncing on walls && this.velocity.x < 0
-         if ((this.position.x < this.radius )&& this.velocity.x < 0|| this.position.x > p.width - this.radius) {
+         if (this.position.x < this.radius  && this.velocity.x < 0|| this.position.x > p.width - this.radius && this.velocity.x > 0) {
            this.velocity.x = this.velocity.x * -1;
          }
 
-         if (this.position.y < this.radius&& this.velocity.y < 0 || this.position.y > p.height - this.radius) {
+         if (this.position.y < this.radius && this.velocity.y < 0 || this.position.y > p.height - this.radius && this.velocity.y > 0) {
            this.velocity.y = this.velocity.y * -1;
          }
     }
