@@ -244,7 +244,6 @@ function checkCollisions(p: p5) {
 }
 
 const statSketch = (p: p5) => {
-  const padding = 20;
   const graphLines: Array<{ sick: number; dead: number }> = [];
   /**
    * P5 Setup
@@ -265,7 +264,7 @@ const statSketch = (p: p5) => {
     p.noStroke();
     p.background(120);
     p.fill(200, 40, 40);
-    p.rect(0 + padding, 0 + padding, graphLines.length, p.height / 2);
+    p.rect(0 , 0 , graphLines.length, p.height / 2 );
     const amountSick = cells.reduce<number>((acc, key) => {
       return acc + key.sicknessKey.length;
     }, 0);
@@ -273,16 +272,20 @@ const statSketch = (p: p5) => {
       return acc + key.deadKey.length;
     }, 0);
     // console.log(amountSick, humans.length)
-    if (graphLines.length > p.width - padding * 2) graphLines.shift();
+    if (graphLines.length > p.width) graphLines.shift();
+    // graphLines.push({ sick: 10, dead: 10 });
     graphLines.push({ sick: amountSick, dead: amountDead });
+    // graphLines.push({ sick: 0 , dead: humans.length });
     p.strokeWeight(1);
     for (let i: number = 0; i < graphLines.length; i++) {
       p.stroke(255, 100, 0);
+      // p.stroke(0,80);
       // tslint:disable-next-line: max-line-length
-      p.line(0 + padding + i, 0 + padding, 0 + padding + i, p.height / 2 + (padding*2) - p.map(graphLines[i].dead || 0, 0, humans.length, padding, p.height / 2));
+      p.line(i, 0, 0 + i, p.height / 2 - p.map(graphLines[i].dead || 0, 0, humans.length, 0, p.height / 2 ));
       p.stroke(0);
       // tslint:disable-next-line: max-line-length
-      p.line(0 + padding + i, 0 + padding, 0 + padding + i, p.height / 2 + padding - p.map(graphLines[i].sick+graphLines[i].dead || 0, 0, humans.length, padding, p.height / 2));
+      p.line(i, 0, i, p.height / 2 - p.map(graphLines[i].dead + graphLines[i].sick || 0, 0, humans.length, 0, p.height / 2 ));
+      // p.noLoop()
     }
   };
 };
