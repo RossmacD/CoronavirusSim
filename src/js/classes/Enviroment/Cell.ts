@@ -5,6 +5,7 @@ export class Cell {
   humanKey: Array<number>;
 sicknessKey: Array<number>;
 deadKey: Array<number>;
+docKey: Array<number>;
 
 
   constructor(_id:number,_x: number, _y: number) {
@@ -15,5 +16,6 @@ deadKey: Array<number>;
     this.humanKey = [];
     this.sicknessKey = [];
     this.deadKey = [];
+    this.docKey = [];
   }
 }

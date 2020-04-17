@@ -24,6 +24,7 @@ export default abstract class Human {
   pulseRadiusMax: number;
   pulseSpeed: number;
   dead:boolean;
+  currentCells:Array<number>;
 
   constructor(_p: p5, _id: number, _position: p5.Vector) {
     this.p = _p;
@@ -42,6 +43,7 @@ export default abstract class Human {
     // this.bounce = false;
     // Number between 0 and 8 representing the closest corner or edge
     // this.closestEdge=0;
+    this.currentCells=[]
     this.dead=false;
     /* Health*/
     this.age = this.p.random(10, 90);
@@ -81,5 +83,8 @@ export default abstract class Human {
     if ((this.position.y < this.radius && this.velocity.y < 0) || (this.position.y > p.height - this.radius && this.velocity.y > 0)) {
       this.velocity.y = this.velocity.y * -1;
     }
+  }
+  turn(direction:number){
+    this.velocity.rotate(direction*0.1)
   }
 }

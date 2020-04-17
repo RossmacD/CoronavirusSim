@@ -1,5 +1,3 @@
-import { Civilian } from "./Civilian";
+import { Civilian } from './Civilian';
 
-export class Socialite extends Civilian{
-    
-}
+export class Socialite extends Civilian {}
