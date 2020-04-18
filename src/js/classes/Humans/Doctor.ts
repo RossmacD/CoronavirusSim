@@ -21,6 +21,7 @@ export class Doctor extends Civilian {
       this.mutate();
     } else {
       this.nn = ml5.neuralNetwork(options);
+        // this.nnLoad()
     }
     this.sickness = 0;
     this.health = 100;
@@ -29,22 +30,26 @@ export class Doctor extends Civilian {
     this.fitness = 0;
   }
 
-  think(closestMag: number,velMag:number,isDoctor:boolean) {
-    const nnInput = [closestMag,velMag,isDoctor];
+  think(posMag: number,velMag:number,isDoctor:boolean) {
+    const nnInput = [posMag,velMag,isDoctor];
     const results = this.nn.classifySync(nnInput);
     // console.log(results[0].label);
     this.turn(parseInt(results[0].label, 10));
   }
 
   nnLoad() {
-    // this.nn.load(, function () {
-    //     console.log('Model Loaded!');
-    //   });
+    this.nn.load('../../../NeuralNet/collision/model.json', ()=>console.log('Loaded'));
   }
 
   nnSave() {
     this.nn.save();
   }
+
+  setNN(nn:any){
+    this.nn=nn;
+    this.mutate();
+  }
+
   step() {
     super.step();
     this.score++;
@@ -68,5 +73,10 @@ export class Doctor extends Civilian {
   mutate() {
     // 10% mutation rate
     this.nn.mutate(0.1);
+  }
+
+  turn(direction:number){
+    super.turn(direction);
+    this.score+=0.1;
   }
 }

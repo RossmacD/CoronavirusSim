@@ -1,0 +1,1 @@
+{"inputUnits":[1],"outputUnits":3,"inputs":{"posMag":{"dtype":"number","min":0,"max":0}},"outputs":{"-1":{"dtype":"string","min":0,"max":1,"uniqueValues":["-1","1","0"],"legend":{"0":[0,0,1],"1":[0,1,0],"-1":[1,0,0]}}},"isNormalized":false}

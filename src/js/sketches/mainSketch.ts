@@ -13,7 +13,7 @@ import { Doctor } from '../classes/Humans/Doctor';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 50;
+const numHumans: number = 150;
 let collisonNo: number = 0;
 let generation: number = 0;
 // Editing these radius values will probably fuck everything
@@ -23,11 +23,11 @@ const numRows: number = 8;
 const numCols: number = 8;
 let colWidth: number;
 let rowHeight: number;
-let doctors:Array<Doctor|Human>;
-let doctorKey:Array<number>;
-let oldDoctorKey:Array<number>;
-let bestDoctor:any;
-let highscore:number=0;
+let doctors: Array<Doctor | Human>;
+let doctorKey: Array<number>;
+let oldDoctorKey: Array<number>;
+let bestDoctor: any;
+let highscore: number = 0;
 // An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
@@ -53,14 +53,13 @@ const sketch = (p: p5) => {
     generateMolecules(p);
     gridifyHumans(p);
     p.frameRate(200);
-    time=0;
     // p.noLoop();
     // console.log(cells);
   };
 
   p.draw = () => {
-    oldDoctorKey=doctorKey;
-    doctorKey =[];
+    oldDoctorKey = doctorKey;
+    doctorKey = [];
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
@@ -68,8 +67,8 @@ const sketch = (p: p5) => {
     renderHumans(p);
     checkCollisions(p);
     // Train Doctors
-    if ((doctorKey.length < 2)) {
-      regenerateMolecules(p, doctorKey[0]||oldDoctorKey[0]);
+    if (doctorKey.length < 1) {
+      regenerateMolecules(p, doctorKey[0] || oldDoctorKey[0]);
       gridifyHumans(p);
     }
   };
@@ -85,34 +84,45 @@ function generateMolecules(p: p5) {
   doctors = [];
   doctorKey = [];
   for (let i = 0; i < numHumans; i++) {
-    if (p.random() > 0.3 || doctors.length > 1 ) {
+    if (p.random() > 0.3 || doctors.length > 1) {
       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else {
       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
       doctors.push(humans[i]);
-      
     }
     humans[i].sickness = p.random(0, 100);
   }
 }
 
-function regenerateMolecules(p:p5,bestDoctorId:number){
+function regenerateMolecules(p: p5, bestDoctorId: number) {
   generation++;
-  console.log(doctors)
-  console.log(bestDoctorId)
+  console.log('GENERATION: ', generation);
+  console.log(doctors);
+  console.log(bestDoctorId);
   // Save the model
-  console.log(humans[bestDoctorId].score)
-  if(generation%50===0)humans[bestDoctorId].nnSave()
-  if(humans[bestDoctorId].score > highscore){bestDoctor=humans[bestDoctorId].nn;highscore=humans[bestDoctorId].score}
-generateGrid(p);
-humans = [];
+  console.log(humans[bestDoctorId].score);
+
+  if (humans[bestDoctorId].score > highscore) {
+    console.log('new Highscore');
+    bestDoctor = humans[bestDoctorId].nn;
+    highscore = humans[bestDoctorId].score;
+    console.log(humans[bestDoctorId], humans[bestDoctorId].nn, bestDoctor);
+  } else {
+    // If not a highscore breed old best with highest from this generation
+    bestDoctor = bestDoctor.crossover(humans[bestDoctorId].nn);
+    console.log('crossingover');
+  }
+  if (generation % 50 === 0) new Doctor(p, 100, p.createVector(100, 100), bestDoctor).nnSave();
+  generateGrid(p);
+  humans = [];
   doctors = [];
   doctorKey = [];
   for (let i = 0; i < numHumans; i++) {
     if (p.random() > 0.3) {
       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else {
-      humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570),bestDoctor)));
+      humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+      humans[i].setNN(bestDoctor);
       doctors.push(humans[i]);
     }
     humans[i].sickness = p.random(0, 100);
@@ -182,10 +192,9 @@ function renderHumans(p: p5) {
 }
 
 function splitIntoGrids(p: p5) {
- 
   generateGrid(p);
   humans.forEach((human) => {
-    if (human.health < 0) {
+    if (human.health < 0 && human.constructor.name !== Doctor.name) {
       humans[human.id] = new DeadHuman(human);
     }
     // Gets the x value by mapping the position of x to the amount of coloumns then flooring it
@@ -211,7 +220,7 @@ function splitIntoGrids(p: p5) {
       cells[currentCell].deadKey = [...unique];
     }
     if (human.constructor.name === Doctor.name) {
-      doctorKey.push(human.id)
+      doctorKey.push(human.id);
     }
     // Overlap Tests:
     // Check which half of the cell it is in, then check if it is closer to that edge than its radius, if so push to th
@@ -274,24 +283,33 @@ function checkCollisions(p: p5) {
           const mag = sub.copy().mag();
           if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
             // tslint:disable-next-line: max-line-length
-            humans[cell.humanKey[j]].think(sub.copy().normalize().mag(),p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(),humans[cell.humanKey[i]].constructor.name === Doctor.name);
+            humans[cell.humanKey[j]].think(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(), humans[cell.humanKey[i]].constructor.name === Doctor.name);
           }
           if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
             // tslint:disable-next-line: max-line-length
-            humans[cell.humanKey[i]].think(sub.copy().normalize().mag(),p5.Vector.sub(humans[cell.humanKey[j]].velocity, humans[cell.humanKey[j]].velocity).normalize().mag(),humans[cell.humanKey[j]].constructor.name === Doctor.name);
+            humans[cell.humanKey[i]].think(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[j]].velocity, humans[cell.humanKey[j]].velocity).normalize().mag(), humans[cell.humanKey[j]].constructor.name === Doctor.name);
           }
           const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
           if (mag < combinedRadius) {
             if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
               doctorKey.push(humans[cell.humanKey[j]].id);
+              const nn = humans[cell.humanKey[j]].nn;
               humans[cell.humanKey[j]] = new DeadHuman(humans[cell.humanKey[j]]);
+              humans[cell.humanKey[j]].nn = nn;
             }
             if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
-              doctorKey.push(humans[cell.humanKey[i]].id)
+              doctorKey.push(humans[cell.humanKey[i]].id);
+              const nn = humans[cell.humanKey[i]].nn;
               humans[cell.humanKey[i]] = new DeadHuman(humans[cell.humanKey[i]]);
+              humans[cell.humanKey[i]].nn = nn;
             }
             // Seperate
-            humans[cell.humanKey[i]].position.add(sub.copy().normalize().mult(combinedRadius - Math.ceil(mag) + 1));
+            humans[cell.humanKey[i]].position.add(
+              sub
+                .copy()
+                .normalize()
+                .mult(combinedRadius - Math.ceil(mag) + 1)
+            );
             // Sepertate balls
             // const splitDist = (combinedRadius - mag) / 2;
             // const splitVector = sub.copy().normalize().mult(splitDist);
