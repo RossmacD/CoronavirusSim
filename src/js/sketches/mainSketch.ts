@@ -25,7 +25,9 @@ let colWidth: number;
 let rowHeight: number;
 let doctors:Array<Doctor|Human>;
 let doctorKey:Array<number>;
-
+let oldDoctorKey:Array<number>;
+let bestDoctor:any;
+let highscore:number=0;
 // An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
@@ -51,11 +53,13 @@ const sketch = (p: p5) => {
     generateMolecules(p);
     gridifyHumans(p);
     p.frameRate(200);
+    time=0;
     // p.noLoop();
     // console.log(cells);
   };
 
   p.draw = () => {
+    oldDoctorKey=doctorKey;
     doctorKey =[];
     p.background(0);
     // Split the molecules into their grids
@@ -65,7 +69,7 @@ const sketch = (p: p5) => {
     checkCollisions(p);
     // Train Doctors
     if ((doctorKey.length < 2)) {
-      regenerateMolecules(p, doctorKey[0]);
+      regenerateMolecules(p, doctorKey[0]||oldDoctorKey[0]);
       gridifyHumans(p);
     }
   };
@@ -97,8 +101,9 @@ function regenerateMolecules(p:p5,bestDoctorId:number){
   console.log(doctors)
   console.log(bestDoctorId)
   // Save the model
+  console.log(humans[bestDoctorId].score)
   if(generation%50===0)humans[bestDoctorId].nnSave()
-const bestDoctor=humans[bestDoctorId].nn
+  if(humans[bestDoctorId].score > highscore){bestDoctor=humans[bestDoctorId].nn;highscore=humans[bestDoctorId].score}
 generateGrid(p);
 humans = [];
   doctors = [];
@@ -268,15 +273,17 @@ function checkCollisions(p: p5) {
           p.line(humans[cell.humanKey[i]].position.x, humans[cell.humanKey[i]].position.y, humans[cell.humanKey[j]].position.x, humans[cell.humanKey[j]].position.y);
           const mag = sub.copy().mag();
           if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
-            humans[cell.humanKey[j]].think(sub.copy().mag());
+            // tslint:disable-next-line: max-line-length
+            humans[cell.humanKey[j]].think(sub.copy().normalize().mag(),p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(),humans[cell.humanKey[i]].constructor.name === Doctor.name);
           }
           if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
-            humans[cell.humanKey[i]].think(sub.copy().mag());
+            // tslint:disable-next-line: max-line-length
+            humans[cell.humanKey[i]].think(sub.copy().normalize().mag(),p5.Vector.sub(humans[cell.humanKey[j]].velocity, humans[cell.humanKey[j]].velocity).normalize().mag(),humans[cell.humanKey[j]].constructor.name === Doctor.name);
           }
           const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
           if (mag < combinedRadius) {
             if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
-              doctorKey.push(humans[cell.humanKey[j]].id) 
+              doctorKey.push(humans[cell.humanKey[j]].id);
               humans[cell.humanKey[j]] = new DeadHuman(humans[cell.humanKey[j]]);
             }
             if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {

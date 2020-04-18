@@ -11,7 +11,7 @@ export class Doctor extends Civilian {
     this.fill = p.color(0, 0, 255);
     const options = {
       task: 'classification',
-      inputs: ['x', 'y', 'closestX', 'closestY'],
+      inputs: ['posMag','velMag','isDoctor'],
       outputs: ['-1', '1', '0'],
       debug: true,
       noTraining: true,
@@ -29,8 +29,8 @@ export class Doctor extends Civilian {
     this.fitness = 0;
   }
 
-  think(closestMag: number) {
-    const nnInput = [closestMag / 10];
+  think(closestMag: number,velMag:number,isDoctor:boolean) {
+    const nnInput = [closestMag,velMag,isDoctor];
     const results = this.nn.classifySync(nnInput);
     // console.log(results[0].label);
     this.turn(parseInt(results[0].label, 10));
