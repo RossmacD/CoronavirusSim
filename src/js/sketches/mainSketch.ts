@@ -3,8 +3,8 @@ import Human from '../classes/Humans/Human';
 import { Civilian } from '../classes/Humans/Civilian';
 import { Cell } from '../classes/Enviroment/Cell';
 import { DeadHuman } from '../classes/Humans/DeadHuman';
-import * as ml5 from '../libraries/ml5';
 import { Doctor } from '../classes/Humans/Doctor';
+import { Socialite } from '../classes/Humans/Socialite';
 
 // ---------------------------
 // Global Variables
@@ -13,9 +13,8 @@ import { Doctor } from '../classes/Humans/Doctor';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 20;
+const numHumans: number = 50;
 let collisonNo: number = 0;
-let generation: number = 0;
 // Editing these radius values will probably fuck everything
 const minRadius: number = 10;
 const maxRadius: number = 10;
@@ -25,9 +24,6 @@ let colWidth: number;
 let rowHeight: number;
 let doctors: Array<Doctor | Human>;
 let doctorKey: Array<number>;
-let oldDoctorKey: Array<number>;
-let bestDoctor: any;
-let highscore: number = 0;
 // An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
@@ -36,8 +32,7 @@ const sketch = (p: p5) => {
   p.setup = () => {
     // Set canavas to fill screen
     // p.createCanvas(p.windowWidth, p.windowHeight);
-    p.createCanvas(p.windowWidth/2, p.windowHeight);
-    ml5.tf.setBackend('cpu');
+    p.createCanvas(p.windowWidth / 2, p.windowHeight);
     // Generating colwidth and height must be done at runtime
     colWidth = p.width / numRows;
     rowHeight = p.height / numCols;
@@ -53,24 +48,15 @@ const sketch = (p: p5) => {
     generateMolecules(p);
     gridifyHumans(p);
     p.frameRate(200);
-    // p.noLoop();
-    // console.log(cells);
   };
 
   p.draw = () => {
-    oldDoctorKey = doctorKey;
-    doctorKey = [];
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
     // drawGrid(p);
     renderHumans(p);
     checkCollisions(p);
-    // Train Doctors
-    if (doctorKey.length < 1) {
-      regenerateMolecules(p, doctorKey[0] || oldDoctorKey[0]);
-      gridifyHumans(p);
-    }
   };
 };
 
@@ -84,49 +70,51 @@ function generateMolecules(p: p5) {
   doctors = [];
   doctorKey = [];
   for (let i = 0; i < numHumans; i++) {
-    if (p.random() > 0.3 || doctors.length > 1) {
+    // humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+    const rand = p.random();
+    if (rand > 0.2 || doctors.length > 1) {
       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+    } else if (rand > 0.05) {
+      humans.push(new Socialite(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else {
       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
-      doctors.push(humans[i]);
     }
   }
 }
 
-function regenerateMolecules(p: p5, bestDoctorId: number) {
-  generation++;
-  console.log('GENERATION: ', generation);
-  console.log(doctors);
-  console.log(bestDoctorId);
-  // Save the model
-  console.log(humans[bestDoctorId].score);
+// function regenerateMolecules(p: p5, bestDoctorId: number) {
+//   generation++;
+//   console.log('GENERATION: ', generation);
+//   console.log(doctors);
+//   console.log(bestDoctorId);
+//   // Save the model
 
-  if (humans[bestDoctorId].score > highscore) {
-    console.log('new Highscore');
-    bestDoctor = humans[bestDoctorId].nn;
-    highscore = humans[bestDoctorId].score;
-    console.log(humans[bestDoctorId], humans[bestDoctorId].nn, bestDoctor);
-  } else {
-    // If not a highscore breed old best with highest from this generation
-    bestDoctor = bestDoctor.crossover(humans[bestDoctorId].nn);
-    console.log('crossingover');
-  }
-  if (generation % 50 === 0) new Doctor(p, 100, p.createVector(100, 100), bestDoctor).nnSave();
-  generateGrid(p);
-  humans = [];
-  doctors = [];
-  doctorKey = [];
-  for (let i = 0; i < numHumans; i++) {
-    if (p.random() > 0.3) {
-      humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
-    } else {
-      humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
-      humans[i].setNN(bestDoctor);
-      doctors.push(humans[i]);
-    }
-    humans[i].sickness = p.random(0, 100);
-  }
-}
+//   if (humans[bestDoctorId].score > highscore) {
+//     console.log('new Highscore');
+//     bestDoctor = humans[bestDoctorId].nn;
+//     highscore = humans[bestDoctorId].score;
+//     console.log(humans[bestDoctorId], humans[bestDoctorId].nn, bestDoctor);
+//   } else {
+//     // If not a highscore breed old best with highest from this generation
+//     bestDoctor = bestDoctor.crossover(humans[bestDoctorId].nn);
+//     console.log('crossingover');
+//   }
+//   if (generation % 50 === 0) new Doctor(p, 100, p.createVector(100, 100), bestDoctor).nnSave();
+//   generateGrid(p);
+//   humans = [];
+//   doctors = [];
+//   doctorKey = [];
+//   for (let i = 0; i < numHumans; i++) {
+//     if (p.random() > 0.3) {
+//       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+//     } else {
+//       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+//       humans[i].setNN(bestDoctor);
+//       doctors.push(humans[i]);
+//     }
+//     humans[i].sickness = p.random(0, 100);
+//   }
+// }
 
 /**
  * Generate grid: creates the GridCell objects and pushes them into an array
@@ -185,14 +173,7 @@ function gridifyHumans(p: p5) {
 function renderHumans(p: p5) {
   humans.forEach((human) => {
     human.render();
-    const doc = human.constructor.name === Doctor.name;
-    // console.log('prethink',doc,human.thinking)
-    if(doc){
-      // const distBetween=human.subBetween;
-      // const angleBetween=distBetween.heading();
-      // const collisionAngle=p5.Vector.sub(human.velocity, humans[human.closestNeighbour].velocity).heading()
-      // tslint:disable-next-line: max-line-length
-      // human.think(p,angleBetween,collisionAngle, humans[human.closestNeighbour].constructor.name === Doctor.name);
+    if (human.constructor.name === Socialite.name) {
       human.think();
     }
     human.step();
@@ -203,7 +184,7 @@ function renderHumans(p: p5) {
 function splitIntoGrids(p: p5) {
   generateGrid(p);
   humans.forEach((human) => {
-    if (human.health < 0 && human.constructor.name !== Doctor.name) {
+    if (human.health < 0) {
       humans[human.id] = new DeadHuman(human);
     }
     // Gets the x value by mapping the position of x to the amount of coloumns then flooring it
@@ -233,9 +214,6 @@ function splitIntoGrids(p: p5) {
     }
     // Overlap Tests:
     // Check which half of the cell it is in, then check if it is closer to that edge than its radius, if so push to th
-    /**
-     * Check if within closest cells
-     */
     // X Check
     const currentCellXStart = colWidth * currentXCell;
     let closestXCell = 0;
@@ -278,73 +256,68 @@ function splitIntoGrids(p: p5) {
 
 function checkCollisions(p: p5) {
   collisonNo = 0;
-  cells.forEach((cell, index) => {
+  cells.forEach((cell) => {
     if (cell.humanKey.length > 1) {
       for (let i = 0; i < cell.humanKey.length; i++) {
         for (let j = i + 1; j < cell.humanKey.length; j++) {
-          const sub = p5.Vector.sub(humans[cell.humanKey[i]].position, humans[cell.humanKey[j]].position);
-          // p.noLoop()
+          const humanId1 = cell.humanKey[i];
+          const humanId2 = cell.humanKey[j];
+          const distBetweenVect = p5.Vector.sub(humans[humanId1].position, humans[humanId2].position);
+          const distBetweenMag = distBetweenVect.copy().mag();
 
+          // Draw lien between
           p.stroke(255, 50);
           p.strokeWeight(2);
           // tslint:disable-next-line: max-line-length
-          // p.line(humans[cell.humanKey[i]].position.x, humans[cell.humanKey[i]].position.y, humans[cell.humanKey[j]].position.x, humans[cell.humanKey[j]].position.y);
-          const mag = sub.copy().mag();
+          p.line(humans[humanId1].position.x, humans[humanId1].position.y, humans[humanId2].position.x, humans[humanId2].position.y);
 
-          
-          // if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
-          //   // tslint:disable-next-line: max-line-length
-          //   humans[cell.humanKey[i]].process(humans[cell.humanKey[j]].id,mag,sub);
-          // }
-          // if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
-          //   // tslint:disable-next-line: max-line-length
-          //   // humans[cell.humanKey[j]].process(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(), humans[cell.humanKey[i]].constructor.name === Doctor.name);
-          //   humans[cell.humanKey[j]].process(humans[cell.humanKey[i]].id,mag,sub);
-          // }
-          const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
-          if (mag < combinedRadius) {
-            if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
-              doctorKey.push(humans[cell.humanKey[j]].id);
-              const nn = humans[cell.humanKey[j]].nn;
-              humans[cell.humanKey[j]] = new DeadHuman(humans[cell.humanKey[j]]);
-              humans[cell.humanKey[j]].nn = nn;
+          if (humans[humanId1].constructor.name === Socialite.name) {
+            if (humans[humanId2].sickness > 80) {
+              humans[humanId2].sickness = 80;
             }
-            if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
-              doctorKey.push(humans[cell.humanKey[i]].id);
-              const nn = humans[cell.humanKey[i]].nn;
-              humans[cell.humanKey[i]] = new DeadHuman(humans[cell.humanKey[i]]);
-              humans[cell.humanKey[i]].nn = nn;
-            }
-            // Seperate
-            humans[cell.humanKey[i]].position.add(
-              sub
-                .copy()
-                .normalize()
-                .mult(combinedRadius - Math.ceil(mag) + 1)
-            );
-
             // tslint:disable-next-line: max-line-length
-            // Trading velocity https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
-            const v1 = humans[cell.humanKey[i]].velocity;
-            humans[cell.humanKey[i]].isColliding = true;
-            humans[cell.humanKey[i]].velocity = humans[cell.humanKey[j]].velocity;
-            humans[cell.humanKey[j]].isColliding = true;
-            humans[cell.humanKey[j]].velocity = v1;
-            if (humans[cell.humanKey[j]].sickness > 80 || humans[cell.humanKey[i]].sickness > 80) {
-              if (humans[cell.humanKey[i]].sickness < 80) humans[cell.humanKey[i]].sickness += 5;
-              if (humans[cell.humanKey[j]].sickness < 80) humans[cell.humanKey[j]].sickness += 5;
-              // humans[cell.humanKey[j]].sickness+=5;
-            }
+            const collisionAngle = p5.Vector.sub(humans[humanId1].position, p5.Vector.add(humans[humanId2].position, humans[humanId2].velocity)).heading();
+            humans[humanId1].process(humans[humanId2].id, distBetweenMag, collisionAngle);
+          }
+          if (humans[cell.humanKey[j]].constructor.name === Socialite.name) {
+            humans[humanId2].sickness -= 2;
+            // tslint:disable-next-line: max-line-length
+            const collisionAngle = p5.Vector.sub(humans[humanId2].position, p5.Vector.add(humans[humanId1].position, humans[humanId1].velocity)).heading();
+            humans[humanId2].process(humans[humanId1].id, distBetweenMag, collisionAngle);
+          }
 
+          const combinedRadius = humans[humanId1].radius + humans[humanId2].radius;
+          if (distBetweenMag < combinedRadius) {
+            handleCollision(humanId1, humanId2, distBetweenVect, combinedRadius, distBetweenMag);
             collisonNo++;
           }
         }
       }
     }
   });
-  // console.log('colliosons', collisonNo);
 }
 
+function handleCollision(humanId1: number, humanId2: number, distBetweenVect: p5.Vector, combinedRadius: number, distBetweenMag: number) {
+  // Seperate the balls
+  humans[humanId1].position.add(
+    distBetweenVect
+      .copy()
+      .normalize()
+      .mult(combinedRadius - Math.ceil(distBetweenMag) + 1)
+  );
+
+  // tslint:disable-next-line: max-line-length
+  // Trading velocity https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
+  const v1 = humans[humanId1].velocity;
+  humans[humanId1].isColliding = true;
+  humans[humanId1].velocity = humans[humanId2].velocity;
+  humans[humanId2].isColliding = true;
+  humans[humanId2].velocity = v1;
+  if (humans[humanId2].sickness > 80 || humans[humanId1].sickness > 80) {
+    if (humans[humanId1].sickness < 80) humans[humanId1].sickness += 10;
+    if (humans[humanId2].sickness < 80) humans[humanId2].sickness += 10;
+  }
+}
 
 const statSketch = (p: p5) => {
   const graphLines: Array<{ sick: number; dead: number }> = [];
@@ -392,4 +365,4 @@ const statSketch = (p: p5) => {
     }
   };
 };
-// export const p5StatSketch = new p5(statSketch);
+export const p5StatSketch = new p5(statSketch);

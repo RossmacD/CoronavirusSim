@@ -45,7 +45,7 @@ export default abstract class Human {
     /* Health*/
     this.age = this.p.random(10, 90);
     this.health = 100 / this.p.random();
-    this.sickness = this.p.random(0,100);
+    this.sickness = this.p.random(50,100);
     // After a successful recovery from the virus you may have immunity for a period, immunity can also be gotten by
     // wahsing hands and so on
     // https://www.nbcnews.com/health/health-news/can-you-catch-coronavirus-twice-you-ll-probably-be-immune-n1171976
