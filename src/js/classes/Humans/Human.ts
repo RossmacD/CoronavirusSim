@@ -19,10 +19,10 @@ export default abstract class Human {
   sickness: number;
   health: number;
   immunity: boolean;
-  asymptomatic: boolean;
+//   asymptomatic: boolean;
   pulseRadius: number;
-  pulseRadiusMax: number;
-  pulseSpeed: number;
+//   pulseRadiusMax: number;
+//   pulseSpeed: number;
   dead:boolean;
   currentCells:Array<number>;
 
@@ -36,13 +36,10 @@ export default abstract class Human {
     this.velocity = this.p.createVector(this.p.random(-2, 2), this.p.random(-2, 2));
     // Pulse represents the contagion
     this.pulseRadius = 1;
-    this.pulseRadiusMax = 15;
-    this.pulseSpeed = 1;
+    // this.pulseRadiusMax = 15;
+    // this.pulseSpeed = 1;
     /* Collision*/
     this.isColliding = false;
-    // this.bounce = false;
-    // Number between 0 and 8 representing the closest corner or edge
-    // this.closestEdge=0;
     this.currentCells=[]
     this.dead=false;
     /* Health*/
@@ -54,7 +51,7 @@ export default abstract class Human {
     // https://www.nbcnews.com/health/health-news/can-you-catch-coronavirus-twice-you-ll-probably-be-immune-n1171976
     this.immunity = false;
     // You might no show symptoms to other viruses, you can still transmit the virus
-    this.asymptomatic = Math.random() < 0.5;
+    // this.asymptomatic = Math.random() < 0.5;
   }
 
   render() {

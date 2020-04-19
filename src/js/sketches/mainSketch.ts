@@ -13,14 +13,14 @@ import { Doctor } from '../classes/Humans/Doctor';
 const cells: Array<Cell> = [];
 // An array of humans
 let humans: Array<Human> = [];
-const numHumans: number = 150;
+const numHumans: number = 20;
 let collisonNo: number = 0;
 let generation: number = 0;
 // Editing these radius values will probably fuck everything
 const minRadius: number = 10;
 const maxRadius: number = 10;
-const numRows: number = 8;
-const numCols: number = 8;
+const numRows: number = 9;
+const numCols: number = 9;
 let colWidth: number;
 let rowHeight: number;
 let doctors: Array<Doctor | Human>;
@@ -36,7 +36,7 @@ const sketch = (p: p5) => {
   p.setup = () => {
     // Set canavas to fill screen
     // p.createCanvas(p.windowWidth, p.windowHeight);
-    p.createCanvas(p.windowHeight, p.windowHeight);
+    p.createCanvas(p.windowWidth/2, p.windowHeight);
     ml5.tf.setBackend('cpu');
     // Generating colwidth and height must be done at runtime
     colWidth = p.width / numRows;
@@ -90,7 +90,6 @@ function generateMolecules(p: p5) {
       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
       doctors.push(humans[i]);
     }
-    humans[i].sickness = p.random(0, 100);
   }
 }
 
@@ -186,6 +185,16 @@ function gridifyHumans(p: p5) {
 function renderHumans(p: p5) {
   humans.forEach((human) => {
     human.render();
+    const doc = human.constructor.name === Doctor.name;
+    // console.log('prethink',doc,human.thinking)
+    if(doc){
+      // const distBetween=human.subBetween;
+      // const angleBetween=distBetween.heading();
+      // const collisionAngle=p5.Vector.sub(human.velocity, humans[human.closestNeighbour].velocity).heading()
+      // tslint:disable-next-line: max-line-length
+      // human.think(p,angleBetween,collisionAngle, humans[human.closestNeighbour].constructor.name === Doctor.name);
+      human.think();
+    }
     human.step();
     human.checkEdges(p);
   });
@@ -279,16 +288,19 @@ function checkCollisions(p: p5) {
           p.stroke(255, 50);
           p.strokeWeight(2);
           // tslint:disable-next-line: max-line-length
-          p.line(humans[cell.humanKey[i]].position.x, humans[cell.humanKey[i]].position.y, humans[cell.humanKey[j]].position.x, humans[cell.humanKey[j]].position.y);
+          // p.line(humans[cell.humanKey[i]].position.x, humans[cell.humanKey[i]].position.y, humans[cell.humanKey[j]].position.x, humans[cell.humanKey[j]].position.y);
           const mag = sub.copy().mag();
-          if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
-            // tslint:disable-next-line: max-line-length
-            humans[cell.humanKey[j]].think(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(), humans[cell.humanKey[i]].constructor.name === Doctor.name);
-          }
-          if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
-            // tslint:disable-next-line: max-line-length
-            humans[cell.humanKey[i]].think(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[j]].velocity, humans[cell.humanKey[j]].velocity).normalize().mag(), humans[cell.humanKey[j]].constructor.name === Doctor.name);
-          }
+
+          
+          // if (humans[cell.humanKey[i]].constructor.name === Doctor.name) {
+          //   // tslint:disable-next-line: max-line-length
+          //   humans[cell.humanKey[i]].process(humans[cell.humanKey[j]].id,mag,sub);
+          // }
+          // if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
+          //   // tslint:disable-next-line: max-line-length
+          //   // humans[cell.humanKey[j]].process(sub.copy().normalize().mag(), p5.Vector.sub(humans[cell.humanKey[i]].velocity, humans[cell.humanKey[i]].velocity).normalize().mag(), humans[cell.humanKey[i]].constructor.name === Doctor.name);
+          //   humans[cell.humanKey[j]].process(humans[cell.humanKey[i]].id,mag,sub);
+          // }
           const combinedRadius = humans[cell.humanKey[i]].radius + humans[cell.humanKey[j]].radius;
           if (mag < combinedRadius) {
             if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
@@ -310,11 +322,6 @@ function checkCollisions(p: p5) {
                 .normalize()
                 .mult(combinedRadius - Math.ceil(mag) + 1)
             );
-            // Sepertate balls
-            // const splitDist = (combinedRadius - mag) / 2;
-            // const splitVector = sub.copy().normalize().mult(splitDist);
-            // humans[cell.humanKey[j]].position.add(splitVector);
-            // humans[cell.humanKey[i]].position.sub(splitVector);
 
             // tslint:disable-next-line: max-line-length
             // Trading velocity https://www.quora.com/When-a-pool-ball-hits-another-ball-at-rest-why-does-the-original-pool-ball-stop-entirely-while-the-other-ball-launches-with-the-first-balls-speed
@@ -328,10 +335,6 @@ function checkCollisions(p: p5) {
               if (humans[cell.humanKey[j]].sickness < 80) humans[cell.humanKey[j]].sickness += 5;
               // humans[cell.humanKey[j]].sickness+=5;
             }
-            // get angle of distanceVect
-            // const heading  = sub.heading();
-            // const sine = p.sin(heading);
-            // const cosine = p.cos(heading);
 
             collisonNo++;
           }
@@ -341,6 +344,7 @@ function checkCollisions(p: p5) {
   });
   // console.log('colliosons', collisonNo);
 }
+
 
 const statSketch = (p: p5) => {
   const graphLines: Array<{ sick: number; dead: number }> = [];

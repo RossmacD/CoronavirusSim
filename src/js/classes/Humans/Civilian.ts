@@ -10,7 +10,7 @@ export class Civilian extends Human {
 
   render() {
     if (this.sickness > 80) {
-      this.fill = this.p.color(255 - this.sickness, 255, 255 - this.sickness, 50 + this.health);
+      this.fill = this.p.color(255 , 255 - this.sickness, 255 - this.sickness, 50 + this.health);
     } else {
       this.fill = this.p.color(255, 255, 255, 50 + this.health);
     }

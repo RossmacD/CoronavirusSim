@@ -7,8 +7,9 @@ export class DeadHuman extends Human {
         super(human.p, human.id, human.position);
         this.velocity=human.p.createVector(0,0)
         this.sickness=0;
-        if(human.score){this.score=human.score}
+        this.score=human.score?human.score:0;
       }
+      
       render(){
         this.p.strokeWeight(5);
         this.p.fill(100,100,100,100);
