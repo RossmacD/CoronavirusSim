@@ -2,12 +2,10 @@ import * as p5 from 'p5';
 import Human from './Human';
 
 export class DeadHuman extends Human {
-   score:number;
     constructor(human:Human) {
         super(human.p, human.id, human.position);
         this.velocity=human.p.createVector(0,0)
         this.sickness=0;
-        this.score=human.score?human.score:0;
       }
       
       render(){

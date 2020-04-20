@@ -1,7 +1,7 @@
 import { Civilian } from './Civilian';
 import * as p5 from 'p5';
 
-export class Socialite extends Civilian {
+export class SocialDistancer extends Civilian {
     collisionAngle: number;
   closestNeighbourDist: number;
   closestNeighbour: number;
