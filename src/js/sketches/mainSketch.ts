@@ -4,7 +4,7 @@ import { Civilian } from '../classes/Humans/Civilian';
 import { Cell } from '../classes/Enviroment/Cell';
 import { DeadHuman } from '../classes/Humans/DeadHuman';
 import { Doctor } from '../classes/Humans/Doctor';
-import { Socialite } from '../classes/Humans/Socialite';
+import { SocialDistancer } from '../classes/Humans/SocialDistancer';
 
 // ---------------------------
 // Global Variables
@@ -24,6 +24,7 @@ let colWidth: number;
 let rowHeight: number;
 let doctors: Array<Doctor | Human>;
 let doctorKey: Array<number>;
+
 // An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
@@ -47,16 +48,15 @@ const sketch = (p: p5) => {
     // Generate initial humans
     generateMolecules(p);
     gridifyHumans(p);
-    p.frameRate(200);
   };
 
   p.draw = () => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
-    // drawGrid(p);
-    renderHumans(p);
+    drawGrid(p);
     checkCollisions(p);
+    renderHumans(p);
   };
 };
 
@@ -75,46 +75,12 @@ function generateMolecules(p: p5) {
     if (rand > 0.2 || doctors.length > 1) {
       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else if (rand > 0.05) {
-      humans.push(new Socialite(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
+      humans.push(new SocialDistancer(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     } else {
       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
     }
   }
 }
-
-// function regenerateMolecules(p: p5, bestDoctorId: number) {
-//   generation++;
-//   console.log('GENERATION: ', generation);
-//   console.log(doctors);
-//   console.log(bestDoctorId);
-//   // Save the model
-
-//   if (humans[bestDoctorId].score > highscore) {
-//     console.log('new Highscore');
-//     bestDoctor = humans[bestDoctorId].nn;
-//     highscore = humans[bestDoctorId].score;
-//     console.log(humans[bestDoctorId], humans[bestDoctorId].nn, bestDoctor);
-//   } else {
-//     // If not a highscore breed old best with highest from this generation
-//     bestDoctor = bestDoctor.crossover(humans[bestDoctorId].nn);
-//     console.log('crossingover');
-//   }
-//   if (generation % 50 === 0) new Doctor(p, 100, p.createVector(100, 100), bestDoctor).nnSave();
-//   generateGrid(p);
-//   humans = [];
-//   doctors = [];
-//   doctorKey = [];
-//   for (let i = 0; i < numHumans; i++) {
-//     if (p.random() > 0.3) {
-//       humans.push(new Civilian(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
-//     } else {
-//       humans.push(new Doctor(p, i, p.createVector(p.random(20, 570), p.random(20, 570))));
-//       humans[i].setNN(bestDoctor);
-//       doctors.push(humans[i]);
-//     }
-//     humans[i].sickness = p.random(0, 100);
-//   }
-// }
 
 /**
  * Generate grid: creates the GridCell objects and pushes them into an array
@@ -147,8 +113,8 @@ function drawGrid(p: p5) {
       p.fill(255, 255, 255, 255);
       p.textSize(16);
       p.textAlign(p.LEFT);
-      const currentCell = x / colWidth + (y / rowHeight) * numCols;
-      const text = cells[currentCell].humanKey.length;
+      const currentCell = x / Math.floor(colWidth) + (y / Math.floor(rowHeight)) * numCols;
+      const text = cells[Math.floor(currentCell)].humanKey.length;
       p.text(text, x + 5, y + 20);
     }
   }
@@ -173,7 +139,7 @@ function gridifyHumans(p: p5) {
 function renderHumans(p: p5) {
   humans.forEach((human) => {
     human.render();
-    if (human.constructor.name === Socialite.name) {
+    if (human.constructor.name === SocialDistancer.name) {
       human.think();
     }
     human.step();
@@ -271,16 +237,21 @@ function checkCollisions(p: p5) {
           // tslint:disable-next-line: max-line-length
           p.line(humans[humanId1].position.x, humans[humanId1].position.y, humans[humanId2].position.x, humans[humanId2].position.y);
 
-          if (humans[humanId1].constructor.name === Socialite.name) {
+          if (humans[humanId1].constructor.name === Doctor.name) {
             if (humans[humanId2].sickness > 80) {
               humans[humanId2].sickness = 80;
             }
+          } else if (humans[humanId1].constructor.name === SocialDistancer.name) {
             // tslint:disable-next-line: max-line-length
             const collisionAngle = p5.Vector.sub(humans[humanId1].position, p5.Vector.add(humans[humanId2].position, humans[humanId2].velocity)).heading();
             humans[humanId1].process(humans[humanId2].id, distBetweenMag, collisionAngle);
           }
-          if (humans[cell.humanKey[j]].constructor.name === Socialite.name) {
-            humans[humanId2].sickness -= 2;
+
+          if (humans[cell.humanKey[j]].constructor.name === Doctor.name) {
+            if (humans[humanId2].sickness > 80) {
+              humans[humanId2].sickness = 80;
+            }
+          } else if (humans[cell.humanKey[j]].constructor.name === SocialDistancer.name) {
             // tslint:disable-next-line: max-line-length
             const collisionAngle = p5.Vector.sub(humans[humanId2].position, p5.Vector.add(humans[humanId1].position, humans[humanId1].velocity)).heading();
             humans[humanId2].process(humans[humanId1].id, distBetweenMag, collisionAngle);
@@ -319,6 +290,10 @@ function handleCollision(humanId1: number, humanId2: number, distBetweenVect: p5
   }
 }
 
+/**
+ *  This sketch dispalys the graph and legend
+ *
+ */
 const statSketch = (p: p5) => {
   const graphLines: Array<{ sick: number; dead: number }> = [];
   /**
@@ -330,39 +305,42 @@ const statSketch = (p: p5) => {
     p.createCanvas(p.windowHeight, p.windowHeight);
     // Set up draw properties
     p.background(0);
-    p.stroke(80, 150, 50);
-    p.strokeWeight(1);
-    // p.noLoop();
-    // console.log(cells);
   };
 
+  /**
+   * P5 Draw
+   */
   p.draw = () => {
     p.noStroke();
     p.background(120);
-    p.fill(200, 40, 40);
-    p.rect(0, 0, graphLines.length, p.height / 2);
-    const amountSick = cells.reduce<number>((acc, key) => {
-      return acc + key.sicknessKey.length;
-    }, 0);
-    const amountDead = cells.reduce<number>((acc, key) => {
-      return acc + key.deadKey.length;
-    }, 0);
-    // console.log(amountSick, humans.length)
-    if (graphLines.length > p.width) graphLines.shift();
-    // graphLines.push({ sick: 10, dead: 10 });
-    graphLines.push({ sick: amountSick, dead: amountDead });
-    // graphLines.push({ sick: 0 , dead: humans.length });
-    p.strokeWeight(1);
-    for (let i: number = 0; i < graphLines.length; i++) {
-      p.stroke(255, 100, 0);
-      // p.stroke(0,80);
-      // tslint:disable-next-line: max-line-length
-      p.line(i, 0, 0 + i, p.height / 2 - p.map(graphLines[i].dead || 0, 0, humans.length, 0, p.height / 2));
-      p.stroke(0);
-      // tslint:disable-next-line: max-line-length
-      p.line(i, 0, i, p.height / 2 - p.map(graphLines[i].dead + graphLines[i].sick || 0, 0, humans.length, 0, p.height / 2));
-      // p.noLoop()
-    }
+    drawGraph(p, graphLines);
   };
 };
 export const p5StatSketch = new p5(statSketch);
+
+function drawGraph(p: p5, graphLines: Array<{ sick: number; dead: number }>) {
+  // Fill uin the background
+  p.fill(200);
+  p.rect(0, 0, graphLines.length, p.height / 2);
+  // Get the amount dead
+  const amountSick = cells.reduce<number>((acc, key) => {
+    return acc + key.sicknessKey.length;
+  }, 0);
+  const amountDead = cells.reduce<number>((acc, key) => {
+    return acc + key.deadKey.length;
+  }, 0);
+  // If the graphlines array has hit the length of the canvas, start  shifting the old ones out
+  if (graphLines.length > p.width) graphLines.shift();
+  // Push in the info for this draw
+  graphLines.push({ sick: amountSick, dead: amountDead });
+  p.strokeWeight(1);
+  // Draw the graph
+  for (let i: number = 0; i < graphLines.length; i++) {
+    p.stroke(200, 40, 40);
+    // tslint:disable-next-line: max-line-length
+    p.line(i, 0, 0 + i, p.height / 2 - p.map(graphLines[i].dead || 0, 0, humans.length, 0, p.height / 2));
+    p.stroke(0);
+    // tslint:disable-next-line: max-line-length
+    p.line(i, 0, i, p.height / 2 - p.map(graphLines[i].dead + graphLines[i].sick || 0, 0, humans.length, 0, p.height / 2));
+  }
+}
