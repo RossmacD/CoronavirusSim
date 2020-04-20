@@ -1,4 +1,5 @@
 import * as p5 from 'p5';
+import Tweakpane from 'tweakpane';
 import Human from '../classes/Humans/Human';
 import { Civilian } from '../classes/Humans/Civilian';
 import { Cell } from '../classes/Enviroment/Cell';
@@ -24,7 +25,11 @@ let colWidth: number;
 let rowHeight: number;
 let doctors: Array<Doctor | Human>;
 let doctorKey: Array<number>;
-
+const gui = new Tweakpane();
+const params = {
+  debugGrid: false,
+  showLines: true,
+};
 // An instance of p5 -> represents one canvas
 const sketch = (p: p5) => {
   /**
@@ -48,13 +53,15 @@ const sketch = (p: p5) => {
     // Generate initial humans
     generateMolecules(p);
     gridifyHumans(p);
+    gui.addInput(params, 'debugGrid');
+    gui.addInput(params, 'showLines');
   };
 
   p.draw = () => {
     p.background(0);
     // Split the molecules into their grids
     splitIntoGrids(p);
-    drawGrid(p);
+    if (params.debugGrid) drawGrid(p);
     checkCollisions(p);
     renderHumans(p);
   };
@@ -231,12 +238,14 @@ function checkCollisions(p: p5) {
           const distBetweenVect = p5.Vector.sub(humans[humanId1].position, humans[humanId2].position);
           const distBetweenMag = distBetweenVect.copy().mag();
 
-          // Draw lien between
-          p.stroke(255, 50);
-          p.strokeWeight(2);
-          // tslint:disable-next-line: max-line-length
-          p.line(humans[humanId1].position.x, humans[humanId1].position.y, humans[humanId2].position.x, humans[humanId2].position.y);
+          if (params.showLines) {
+            // Draw lien between
+            p.stroke(255, 50);
+            p.strokeWeight(2);
 
+            // tslint:disable-next-line: max-line-length
+            p.line(humans[humanId1].position.x, humans[humanId1].position.y, humans[humanId2].position.x, humans[humanId2].position.y);
+          }
           if (humans[humanId1].constructor.name === Doctor.name) {
             if (humans[humanId2].sickness > 80) {
               humans[humanId2].sickness = 80;
@@ -290,11 +299,8 @@ function handleCollision(humanId1: number, humanId2: number, distBetweenVect: p5
   }
 }
 
-
-
-
 // tslint:disable-next-line: no-unused-expression
-let legend:Array<{label:string,human:Human}>
+let legend: Array<{ label: string; human: Human }>;
 /**
  *  This sketch dispalys the graph and legend
  *
@@ -310,7 +316,7 @@ const statSketch = (p: p5) => {
     p.createCanvas(p.windowHeight, p.windowHeight);
     // Set up draw properties
     p.background(0);
-    legend=createLegend(p);
+    legend = createLegend(p);
   };
 
   /**
@@ -320,7 +326,8 @@ const statSketch = (p: p5) => {
     p.noStroke();
     p.background(150);
     drawGraph(p, graphLines);
-    drawLegend(p,legend);
+    drawLegend(p, legend);
+    drawStats(p, graphLines);
   };
 };
 export const p5StatSketch = new p5(statSketch);
@@ -352,38 +359,63 @@ function drawGraph(p: p5, graphLines: Array<{ sick: number; dead: number }>) {
   }
 }
 
-function createLegend(p:p5){
-  const basicCivilian=new Civilian(p,-1,p.createVector(50,p.height/2+50));
-  basicCivilian.sickness=0;
-  basicCivilian.health=100;
+function createLegend(p: p5) {
+  const distFromTop = 50;
+  const basicCivilian = new Civilian(p, -1, p.createVector(60, p.height / 2 + 50 + distFromTop));
+  basicCivilian.sickness = 0;
+  basicCivilian.health = 100;
 
-  const sickCivillian=new Civilian(p,-2,p.createVector(50,p.height/2+100));
-  sickCivillian.sickness=1000000;
-  sickCivillian.health=100;
+  const sickCivillian = new Civilian(p, -2, p.createVector(60, p.height / 2 + 100 + distFromTop));
+  sickCivillian.sickness = 1000000;
+  sickCivillian.health = 100;
 
-  const basicDoctor =new Doctor(p,-3,p.createVector(50,p.height/2+150));
-  basicDoctor.sickness=0;
-  basicDoctor.health=100;
+  const basicDoctor = new Doctor(p, -3, p.createVector(60, p.height / 2 + 150 + distFromTop));
+  basicDoctor.sickness = 0;
+  basicDoctor.health = 100;
 
-  const basicSocialDistancer=new SocialDistancer(p,-4,p.createVector(50,p.height/2+200));
-  basicSocialDistancer.sickness=0;
-  basicSocialDistancer.health=100;
+  const basicSocialDistancer = new SocialDistancer(p, -4, p.createVector(60, p.height / 2 + 200 + distFromTop));
+  basicSocialDistancer.sickness = 0;
+  basicSocialDistancer.health = 100;
 
-  const bascDeadHuman=new DeadHuman(new Civilian(p,-5,p.createVector(50,p.height/2+250)));
+  const bascDeadHuman = new DeadHuman(new Civilian(p, -5, p.createVector(60, p.height / 2 + 250 + distFromTop)));
 
-  return [{label:'Civilian',human:basicCivilian},{label:'Sick Civilian',human:sickCivillian},{label:'Doctor',human:basicDoctor},{label:'Social Distancer',human:basicSocialDistancer},{label:'Dead Human',human:bascDeadHuman}]
-
+  return [
+    { label: 'Civilian', human: basicCivilian },
+    { label: 'Sick Civilian', human: sickCivillian },
+    { label: 'Doctor', human: basicDoctor },
+    { label: 'Social Distancer', human: basicSocialDistancer },
+    { label: 'Dead Human', human: bascDeadHuman },
+  ];
 }
-function drawLegend(p:p5, legendArray:Array<{label:string,human:Human}>){
-  p.fill(0);
-  p.rect(25,p.height/2+25,p.height/2-25,p.height/2-25)
-  legendArray.forEach(legendObject=>{
-    legendObject.human.render()
-    // Text to show amount of humans in cell
+function drawLegend(p: p5, legendArray: Array<{ label: string; human: Human }>) {
+  p.fill(20);
+  p.rect(25, p.height / 2 + 25, p.height / 2 - 25, p.height / 2 - 25);
+  // Text to show labels
+  p.noStroke();
+  p.fill(255, 255, 255, 255);
+  p.textSize(20);
+  p.textAlign(p.LEFT);
+  p.text('Legend:', 50, p.height / 2 + 25 + 40);
+
+  legendArray.forEach((legendObject) => {
+    legendObject.human.render();
+    // Text to show labels
     p.noStroke();
     p.fill(255, 255, 255, 255);
     p.textSize(16);
     p.textAlign(p.LEFT);
-    p.text('- '+legendObject.label, legendObject.human.position.x + 20, legendObject.human.position.y+6);
-  })
+    p.text('- ' + legendObject.label, legendObject.human.position.x + 20, legendObject.human.position.y + 6);
+  });
+}
+
+function drawStats(p: p5, graphLines: Array<{ sick: number; dead: number }>) {
+  p.fill(20);
+  p.rect(p.height / 2 + 25, p.height / 2 + 25, p.height / 2 - 50, p.height / 2 - 25);
+  // Text to show labels
+  p.noStroke();
+  p.fill(255, 255, 255, 255);
+  p.textSize(30);
+  p.textAlign(p.LEFT);
+  p.text('Sick: ' + Math.floor(p.map(graphLines[graphLines.length - 1].sick + graphLines[graphLines.length - 1].dead, 0, humans.length, 0, 100)) + '%', p.height / 2 + 150 - 30, p.height / 2 + 50 + 40);
+  p.text('Dead: ' + Math.floor(p.map(graphLines[graphLines.length - 1].dead, 0, humans.length, 0, 100)) + '%', p.height / 2 + 150 - 30, p.height / 2 + 160);
 }
