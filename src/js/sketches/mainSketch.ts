@@ -290,6 +290,11 @@ function handleCollision(humanId1: number, humanId2: number, distBetweenVect: p5
   }
 }
 
+
+
+
+// tslint:disable-next-line: no-unused-expression
+let legend:Array<{label:string,human:Human}>
 /**
  *  This sketch dispalys the graph and legend
  *
@@ -305,6 +310,7 @@ const statSketch = (p: p5) => {
     p.createCanvas(p.windowHeight, p.windowHeight);
     // Set up draw properties
     p.background(0);
+    legend=createLegend(p);
   };
 
   /**
@@ -312,8 +318,9 @@ const statSketch = (p: p5) => {
    */
   p.draw = () => {
     p.noStroke();
-    p.background(120);
+    p.background(150);
     drawGraph(p, graphLines);
+    drawLegend(p,legend);
   };
 };
 export const p5StatSketch = new p5(statSketch);
@@ -343,4 +350,40 @@ function drawGraph(p: p5, graphLines: Array<{ sick: number; dead: number }>) {
     // tslint:disable-next-line: max-line-length
     p.line(i, 0, i, p.height / 2 - p.map(graphLines[i].dead + graphLines[i].sick || 0, 0, humans.length, 0, p.height / 2));
   }
+}
+
+function createLegend(p:p5){
+  const basicCivilian=new Civilian(p,-1,p.createVector(50,p.height/2+50));
+  basicCivilian.sickness=0;
+  basicCivilian.health=100;
+
+  const sickCivillian=new Civilian(p,-2,p.createVector(50,p.height/2+100));
+  sickCivillian.sickness=1000000;
+  sickCivillian.health=100;
+
+  const basicDoctor =new Doctor(p,-3,p.createVector(50,p.height/2+150));
+  basicDoctor.sickness=0;
+  basicDoctor.health=100;
+
+  const basicSocialDistancer=new SocialDistancer(p,-4,p.createVector(50,p.height/2+200));
+  basicSocialDistancer.sickness=0;
+  basicSocialDistancer.health=100;
+
+  const bascDeadHuman=new DeadHuman(new Civilian(p,-5,p.createVector(50,p.height/2+250)));
+
+  return [{label:'Civilian',human:basicCivilian},{label:'Sick Civilian',human:sickCivillian},{label:'Doctor',human:basicDoctor},{label:'Social Distancer',human:basicSocialDistancer},{label:'Dead Human',human:bascDeadHuman}]
+
+}
+function drawLegend(p:p5, legendArray:Array<{label:string,human:Human}>){
+  p.fill(0);
+  p.rect(25,p.height/2+25,p.height/2-25,p.height/2-25)
+  legendArray.forEach(legendObject=>{
+    legendObject.human.render()
+    // Text to show amount of humans in cell
+    p.noStroke();
+    p.fill(255, 255, 255, 255);
+    p.textSize(16);
+    p.textAlign(p.LEFT);
+    p.text('- '+legendObject.label, legendObject.human.position.x + 20, legendObject.human.position.y+6);
+  })
 }
